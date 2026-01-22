@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ewidencja Pojazdów - Final</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Ewidencja Pojazdów (Pełna Wersja)</h1>
+    
+    <div id="alertPlaceholder"></div>
+
+    <button class="btn btn-success my-3" data-bs-toggle="modal" data-bs-target="#modalPojazd">
+        + Dodaj Pojazd
+    </button>
+
+    <table class="table table-bordered table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Rejestracja</th>
+                <th>Marka</th>
+                <th>Model</th>
+                <th>Właściciel</th>
+                <th style="width: 180px;">Akcje</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-body">
+            </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="modalPojazd" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Dane Pojazdu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAuto">
+                    <div class="mb-3">
+                        <label class="form-label">Nr Rejestracyjny <span class="text-danger">*</span></label>
+                        <input type="text" id="nrRej" class="form-control" placeholder="np. KRA 12345" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Marka <span class="text-danger">*</span></label>
+                        <input type="text" id="marka" class="form-control" placeholder="np. Toyota" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Model</label>
+                        <input type="text" id="model" class="form-control" placeholder="np. Yaris">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Właściciel</label>
+                        <input type="text" id="wlasciciel" class="form-control" placeholder="Imię i Nazwisko">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" onclick="zapiszPojazd()">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalUsun" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Potwierdzenie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Czy na pewno chcesz usunąć ten pojazd? Tej operacji nie można cofnąć.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Nie</button>
+                <button type="button" class="btn btn-danger" onclick="potwierdzUsuniecie()">Tak, usuń</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    
+    var auta = [];
+    var indeksDoUsuniecia = -1; 
+
+
+    function pokazTabele() {
+        var tabela = document.getElementById("tabela-body");
+        tabela.innerHTML = "";
+
+        auta.forEach((auto, index) => {
+            var wiersz = `<tr>
+                <td>${auto.nr}</td>
+                <td>${auto.marka}</td>
+                <td>${auto.model}</td>
+                <td>${auto.wlasciciel}</td>
+                <td>
+                    <button class='btn btn-warning btn-sm' onclick='pokazAlert("Edycja jeszcze nie działa w pełni", "warning")'>Edytuj</button>
+                    <button class='btn btn-danger btn-sm' onclick='otworzModalUsun(${index})'>Usuń</button>
+                </td>
+            </tr>`;
+            tabela.innerHTML += wiersz;
+        });
+    }
+
+  
+    function zapiszPojazd() {
+        var nr = document.getElementById("nrRej").value;
+        var marka = document.getElementById("marka").value;
+        var model = document.getElementById("model").value;
+        var wlasciciel = document.getElementById("wlasciciel").value;
+
+        
+        if (nr === "" || marka === "") {
+            pokazAlert("Błąd! Pola Rejestracja i Marka są wymagane!", "danger");
+            return;
+        }
+
+        var noweAuto = { nr: nr, marka: marka, model: model, wlasciciel: wlasciciel };
+        auta.push(noweAuto);
+
+        
+        document.getElementById("formAuto").reset();
+        bootstrap.Modal.getInstance(document.getElementById('modalPojazd')).hide();
+        
+        pokazTabele();
+        pokazAlert("Sukces! Pojazd został dodany do bazy.", "success");
+    }
+
+    
+    function otworzModalUsun(index) {
+        indeksDoUsuniecia = index; 
+        var modal = new bootstrap.Modal(document.getElementById('modalUsun'));
+        modal.show();
+    }
+
+  
+    function potwierdzUsuniecie() {
+        if (indeksDoUsuniecia > -1) {
+            auta.splice(indeksDoUsuniecia, 1);
+            pokazTabele();
+            pokazAlert("Pojazd został usunięty.", "info");
+            
+            
+            var modalEl = document.getElementById('modalUsun');
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        }
+    }
+
+    
+    function pokazAlert(wiadomosc, typ) {
+        var place = document.getElementById("alertPlaceholder");
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = [
+            `<div class="alert alert-${typ} alert-dismissible" role="alert">`,
+            `   <div>${wiadomosc}</div>`,
+            '   <button type="button" class="btn-close" data-bs-dismiss="alert"></button>',
+            '</div>'
+        ].join('');
+
+        place.append(wrapper);
+
+        
+        setTimeout(() => {
+            wrapper.remove();
+        }, 3000);
+    }
+
+</script>
+</body>
+</html>
